@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Website</title>
+    <title>Advanced 3D Website</title>
     <style>
         body, html {
             margin: 0;
@@ -27,6 +27,8 @@
     <div id="canvas-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
     <script>
         // Set up scene, camera, and renderer
         const scene = new THREE.Scene();
@@ -35,34 +37,96 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(10, 10, 10);
+        scene.add(pointLight);
+
         // Add a 3D cube
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
+        const cubeGeometry = new THREE.BoxGeometry();
+        const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         scene.add(cube);
 
         // Add a 3D sphere
         const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(3, 0, 0);
+        sphere.position.set(-3, 0, 0);
         scene.add(sphere);
 
+        // Add a 3D torus
+        const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+        const torusMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        torus.position.set(3, 0, 0);
+        scene.add(torus);
+
+        // Add a 3D plane
+        const planeGeometry = new THREE.PlaneGeometry(5, 5);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -2;
+        scene.add(plane);
+
+        // Add a 3D cone
+        const coneGeometry = new THREE.ConeGeometry(1, 2, 32);
+        const coneMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+        const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+        cone.position.set(0, 3, 0);
+        scene.add(cone);
+
+        // Add a 3D cylinder
+        const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 2, 32);
+        const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+        cylinder.position.set(0, -3, 0);
+        scene.add(cylinder);
+
+        // Add texture to the plane
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('https://threejs.org/examples/textures/uv_grid_opengl.jpg', (texture) => {
+            planeMaterial.map = texture;
+            planeMaterial.needsUpdate = true;
+        });
+
         // Position the camera
-        camera.position.z = 5;
+        camera.position.z = 10;
+
+        // Add controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
 
         // Add animation
         function animate() {
             requestAnimationFrame(animate);
 
-            // Rotate the cube
+            // Rotate objects
             cube.rotation.x += 0.01;
             cube.rotation.y += 0.01;
 
-            // Rotate the sphere
             sphere.rotation.x += 0.01;
             sphere.rotation.y += 0.01;
 
+            torus.rotation.x += 0.01;
+            torus.rotation.y += 0.01;
+
+            cone.rotation.x += 0.01;
+            cone.rotation.y += 0.01;
+
+            cylinder.rotation.x += 0.01;
+            cylinder.rotation.y += 0.01;
+
+            // Update controls
+            controls.update();
+
+            // Render the scene
             renderer.render(scene, camera);
         }
 
@@ -78,6 +142,89 @@
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
         });
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                    camera.position.z -= 1;
+                    break;
+                case 'ArrowDown':
+                    camera.position.z += 1;
+                    break;
+                case 'ArrowLeft':
+                    camera.position.x -= 1;
+                    break;
+                case 'ArrowRight':
+                    camera.position.x += 1;
+                    break;
+                case 'KeyR':
+                    cube.rotation.x = 0;
+                    cube.rotation.y = 0;
+                    break;
+                case 'KeyS':
+                    sphere.scale.set(2, 2, 2);
+                    break;
+            }
+        });
+
+        // Add a GUI for controls
+        const gui = new dat.GUI();
+        const params = {
+            cubeColor: '#00ff00',
+            sphereColor: '#ff0000',
+            torusColor: '#0000ff',
+            coneColor: '#ffff00',
+            cylinderColor: '#00ffff',
+            planeColor: '#808080',
+            ambientLight: 0x404040,
+            pointLightIntensity: 1
+        };
+
+        gui.addColor(params, 'cubeColor').onChange((color) => {
+            cubeMaterial.color.set(color);
+        });
+        gui.addColor(params, 'sphereColor').onChange((color) => {
+            sphereMaterial.color.set(color);
+        });
+        gui.addColor(params, 'torusColor').onChange((color) => {
+            torusMaterial.color.set(color);
+        });
+        gui.addColor(params, 'coneColor').onChange((color) => {
+            coneMaterial.color.set(color);
+        });
+        gui.addColor(params, 'cylinderColor').onChange((color) => {
+            cylinderMaterial.color.set(color);
+        });
+        gui.addColor(params, 'planeColor').onChange((color) => {
+            planeMaterial.color.set(color);
+        });
+        gui.addColor(params, 'ambientLight').onChange((color) => {
+            ambientLight.color.set(color);
+        });
+        gui.add(params, 'pointLightIntensity', 0, 2).onChange((value) => {
+            pointLight.intensity = value;
+        });
+
+        // Add a function to create a new object
+        function createObject() {
+            const geometry = new THREE.IcosahedronGeometry();
+            const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+            const newObject = new THREE.Mesh(geometry, material);
+            newObject.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+            scene.add(newObject);
+        }
+
+        // Add a button to create new objects
+        const button = document.createElement('button');
+        button.innerHTML = 'Add New Object';
+        button.style.position = 'absolute';
+        button.style.top = '10px';
+        button.style.left = '10px';
+        button.style.zIndex = '100';
+        document.body.appendChild(button);
+        button.addEventListener('click', createObject);
+
     </script>
 </body>
 </html>
